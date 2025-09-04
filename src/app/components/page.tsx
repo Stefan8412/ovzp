@@ -24,6 +24,9 @@ export default function ComponentsPage() {
   // Info modal state
   const [infoComponent, setInfoComponent] = useState<any | null>(null);
 
+  // Collapsible state for reservations summary
+  const [openOrgs, setOpenOrgs] = useState<Record<string, boolean>>({});
+
   useEffect(() => {
     loadData();
   }, []);
@@ -98,6 +101,11 @@ export default function ComponentsPage() {
     if (!summary[orgId][compId]) summary[orgId][compId] = 0;
     summary[orgId][compId] += qty;
   });
+
+  // Toggle open/close org
+  function toggleOrg(orgId: string) {
+    setOpenOrgs((prev) => ({ ...prev, [orgId]: !prev[orgId] }));
+  }
 
   if (loading) return <p className="p-6">Loading...</p>;
   if (error) return <p className="p-6 text-red-600">{error}</p>;
@@ -194,24 +202,34 @@ export default function ComponentsPage() {
           <ul className="space-y-4">
             {Object.entries(summary).map(([orgId, comps]) => {
               const org = orgs.find((o) => o.$id === orgId);
+              const isOpen = openOrgs[orgId] || false;
               return (
                 <li
                   key={orgId}
                   className="p-4 bg-gray-100 dark:bg-gray-700 rounded"
                 >
-                  <h3 className="font-semibold mb-2">
-                    {org ? org.name : "Unknown Organization"}
-                  </h3>
-                  <ul className="list-disc list-inside">
-                    {Object.entries(comps).map(([compId, qty]) => {
-                      const comp = components.find((c) => c.$id === compId);
-                      return (
-                        <li key={compId}>
-                          {comp ? comp.name : "Unknown Component"}: {qty}
-                        </li>
-                      );
-                    })}
-                  </ul>
+                  <button
+                    onClick={() => toggleOrg(orgId)}
+                    className="w-full flex justify-between items-center text-left font-semibold"
+                  >
+                    <span>{org ? org.name : "Unknown Organization"}</span>
+                    <span className="text-sm text-blue-500">
+                      {isOpen ? "▼" : "▶"}
+                    </span>
+                  </button>
+
+                  {isOpen && (
+                    <ul className="list-disc list-inside mt-2 space-y-1">
+                      {Object.entries(comps).map(([compId, qty]) => {
+                        const comp = components.find((c) => c.$id === compId);
+                        return (
+                          <li key={compId}>
+                            {comp ? comp.name : "Unknown Component"}: {qty}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
                 </li>
               );
             })}
