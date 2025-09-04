@@ -12,14 +12,14 @@ const ORGS_COLLECTION = "68a583a30003f51d3891";
 const RESERVATIONS_COLLECTION = "reservations"; // add your reservations collection ID
 
 export default function DashboardPage() {
-  const [profile, setProfile] = useState<any>(null);
-  const [members, setMembers] = useState<any[]>([]);
-  const [systems, setSystems] = useState<any[]>([]);
-  const [accesses, setAccesses] = useState<any[]>([]);
-  const [orgs, setOrgs] = useState<any[]>([]);
-  const [reservations, setReservations] = useState<any[]>([]);
+  const [profile, setProfile] = useState(null);
+  const [members, setMembers] = useState([]);
+  const [systems, setSystems] = useState([]);
+  const [accesses, setAccesses] = useState([]);
+  const [orgs, setOrgs] = useState([]);
+  const [reservations, setReservations] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     async function loadDashboard() {
