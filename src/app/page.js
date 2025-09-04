@@ -10,18 +10,18 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto flex justify-between items-center">
           <h1 className="text-2xl font-bold">OVZP - PSK</h1>
           <nav className="flex gap-6">
-            <a
+            <Link
               href="/login"
               className="hover:text-blue-600 dark:hover:text-blue-400"
             >
               Login
-            </a>
-            <a
+            </Link>
+            <Link
               href="/components"
               className="hover:text-blue-600 dark:hover:text-blue-400"
             >
               PC komponenty
-            </a>
+            </Link>
           </nav>
         </div>
       </header>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { account, setJWT } from "@/lib/appwrite";
+import Link from "next/link";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -77,12 +78,12 @@ export default function LoginPage() {
         </h1>
         <div className="max-w-6xl mx-auto flex justify-between items-center">
           <nav className="flex gap-6">
-            <a
+            <Link
               href="/"
               className="hover:text-blue-600 dark:hover:text-blue-400"
             >
               Home
-            </a>
+            </Link>
           </nav>
         </div>
         <button

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { databases } from "@/lib/appwrite";
 import { ID, Query } from "appwrite";
-
+import Link from "next/link";
 const DB_ID = "68a583900021d206e9b7";
 const COMPONENTS_COLLECTION = "components";
 const RESERVATIONS_COLLECTION = "reservations";
@@ -117,24 +117,24 @@ export default function ComponentsPage() {
         <div className="max-w-6xl mx-auto flex justify-between items-center">
           <h1 className="text-2xl font-bold">OVZP - PSK</h1>
           <nav className="flex gap-6">
-            <a
+            <Link
               href="/"
               className="hover:text-blue-600 dark:hover:text-blue-400"
             >
               Home
-            </a>
-            <a
+            </Link>
+            <Link
               href="/login"
               className="hover:text-blue-600 dark:hover:text-blue-400"
             >
               Login
-            </a>
-            <a
+            </Link>
+            <Link
               href="/components"
               className="hover:text-blue-600 dark:hover:text-blue-400"
             >
               PC komponenty
-            </a>
+            </Link>
           </nav>
         </div>
       </header>
