@@ -158,7 +158,7 @@ export default function DashboardPage() {
                 {profile.role === "responsible" && (
                   <select
                     defaultValue=""
-                    onChange={(e) => grantAccess(m.$id, e.target.value)}
+                    // onChange={(e) => grantAccess(m.$id, e.target.value)}
                     className="border rounded px-2 py-1 dark:bg-gray-700 dark:text-gray-100"
                   >
                     <option value="">Grant access...</option>
