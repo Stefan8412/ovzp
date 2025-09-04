@@ -83,7 +83,7 @@ export default function DashboardPage() {
           );
           setReservations(reservationsRes.documents);
         }
-      } catch (err: any) {
+      } catch (err) {
         console.error("Error loading dashboard:", err);
         setError(err.message || "Failed to load dashboard");
       } finally {
