@@ -112,7 +112,32 @@ export default function ComponentsPage() {
 
   return (
     <div className="p-6 space-y-10 text-gray-900 dark:text-gray-100">
-      <h1 className="text-2xl font-bold">PC komponenty</h1>
+      {/* Header */}
+      <header className="bg-white dark:bg-gray-800 shadow p-6">
+        <div className="max-w-6xl mx-auto flex justify-between items-center">
+          <h1 className="text-2xl font-bold">OVZP - PSK</h1>
+          <nav className="flex gap-6">
+            <a
+              href="/"
+              className="hover:text-blue-600 dark:hover:text-blue-400"
+            >
+              Home
+            </a>
+            <a
+              href="/login"
+              className="hover:text-blue-600 dark:hover:text-blue-400"
+            >
+              Login
+            </a>
+            <a
+              href="/components"
+              className="hover:text-blue-600 dark:hover:text-blue-400"
+            >
+              PC komponenty
+            </a>
+          </nav>
+        </div>
+      </header>
 
       {/* Components list */}
       <div className="grid grid-cols-2 gap-4">
@@ -160,7 +185,7 @@ export default function ComponentsPage() {
               <option value="">Zvoľ komponent...</option>
               {components.map((c) => (
                 <option key={c.$id} value={c.$id}>
-                  {c.name} (Available: {c.available})
+                  {c.name} (dostupné: {c.available})
                 </option>
               ))}
             </select>
@@ -271,11 +296,14 @@ export default function ComponentsPage() {
             </ul>
 
             <p className="mt-4 text-gray-700 dark:text-gray-300">
-              Available: {infoComponent.available}
+              dostupné: {infoComponent.available}
             </p>
           </div>
         </div>
       )}
+      <footer className="bg-white dark:bg-gray-800 p-4 text-center mt-10 text-sm text-gray-600 dark:text-gray-400">
+        © {new Date().getFullYear()} Rezervacny system. All rights reserved.
+      </footer>
     </div>
   );
 }
