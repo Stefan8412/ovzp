@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { databases } from "@/lib/appwrite";
 import { ID, Query } from "appwrite";
 import Link from "next/link";
+import Header from "./Header";
 const DB_ID = "68a583900021d206e9b7";
 const COMPONENTS_COLLECTION = "components";
 const RESERVATIONS_COLLECTION = "reservations";
@@ -113,31 +114,7 @@ export default function ComponentsPage() {
   return (
     <div className="p-6 space-y-10 text-gray-900 dark:text-gray-100">
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 shadow p-6">
-        <div className="max-w-6xl mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold">OVZP - PSK</h1>
-          <nav className="flex gap-6">
-            <Link
-              href="/"
-              className="hover:text-blue-600 dark:hover:text-blue-400"
-            >
-              Home
-            </Link>
-            <Link
-              href="/login"
-              className="hover:text-blue-600 dark:hover:text-blue-400"
-            >
-              Login
-            </Link>
-            <Link
-              href="/components"
-              className="hover:text-blue-600 dark:hover:text-blue-400"
-            >
-              PC komponenty
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <Header />
 
       {/* Components list */}
       <div className="grid grid-cols-2 gap-4">

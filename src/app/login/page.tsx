@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { account, setJWT } from "@/lib/appwrite";
 import Link from "next/link";
+import Header from "../components/Header";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -72,28 +73,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col">
       {/* Header */}
-      <header className="flex justify-between items-center p-4 bg-white dark:bg-gray-800 shadow">
-        <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-          OVZP
-        </h1>
-        <div className="max-w-6xl mx-auto flex justify-between items-center">
-          <nav className="flex gap-6">
-            <Link
-              href="/"
-              className="hover:text-blue-600 dark:hover:text-blue-400"
-            >
-              Home
-            </Link>
-          </nav>
-        </div>
-        <button
-          onClick={toggleDarkMode}
-          className="px-3 py-1 rounded bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600"
-        >
-          {darkMode ? "☀️ Light" : "🌙 Dark"}
-        </button>
-      </header>
-
+      <Header />
       {/* Login Form */}
       <main className="flex-grow flex items-center justify-center">
         <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-8 w-full max-w-md">
