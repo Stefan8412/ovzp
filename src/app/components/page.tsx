@@ -21,6 +21,7 @@ export default function ComponentsPage() {
   const [selectedOrg, setSelectedOrg] = useState("");
   const [selectedComp, setSelectedComp] = useState("");
   const [quantity, setQuantity] = useState(1);
+  const [orgSearch, setOrgSearch] = useState("");
 
   // Info modal state
   const [infoComponent, setInfoComponent] = useState<any | null>(null);
@@ -32,16 +33,56 @@ export default function ComponentsPage() {
     loadData();
   }, []);
 
-  async function loadData() {
+  async function fetchAllOrganizations() {
+    const allOrgs: any[] = [];
+    let offset = 0;
+    const limit = 100; // Appwrite max limit per query
+
+    while (true) {
+      const res = await databases.listDocuments(DB_ID, ORGS_COLLECTION, [
+        Query.limit(limit),
+        Query.offset(offset),
+      ]);
+
+      allOrgs.push(...res.documents);
+
+      if (res.documents.length < limit) {
+        break; // no more pages
+      }
+
+      offset += limit;
+    }
+
+    return allOrgs;
+  }
+
+  async function loadData(filters?: { mesto?: string; description?: string }) {
     try {
-      const [compRes, resRes, orgRes] = await Promise.all([
+      const [compRes, resRes, orgDocs] = await Promise.all([
         databases.listDocuments(DB_ID, COMPONENTS_COLLECTION),
         databases.listDocuments(DB_ID, RESERVATIONS_COLLECTION),
-        databases.listDocuments(DB_ID, ORGS_COLLECTION),
+        fetchAllOrganizations(),
       ]);
+
+      let orgsFiltered = orgDocs;
+
+      // 🔹 Apply filters client-side
+      if (filters?.mesto) {
+        orgsFiltered = orgsFiltered.filter(
+          (o) => o.Mesto?.toLowerCase() === filters.mesto.toLowerCase()
+        );
+      }
+
+      if (filters?.description) {
+        orgsFiltered = orgsFiltered.filter((o) =>
+          o.description
+            ?.toLowerCase()
+            .includes(filters.description.toLowerCase())
+        );
+      }
       setComponents(compRes.documents);
       setReservations(resRes.documents);
-      setOrgs(orgRes.documents);
+      setOrgs(orgsFiltered);
     } catch (err: any) {
       console.error("Error loading components:", err);
       setError(err.message);
@@ -134,20 +175,41 @@ export default function ComponentsPage() {
       <div className="bg-white dark:bg-gray-800 p-6 rounded shadow">
         <h2 className="text-xl font-semibold mb-4">Rezervuj</h2>
         <form onSubmit={handleReserve} className="space-y-4">
+          {/* 🔹 Organization Search + Dropdown */}
           <div>
-            <label className="block text-sm">Organizácia</label>
+            <label className="block text-sm text-gray-700 dark:text-gray-300">
+              Organizácia
+            </label>
+            <input
+              type="text"
+              placeholder="Hľadaj organizáciu podľa názvu, mesta alebo popisu..."
+              value={orgSearch}
+              onChange={(e) => setOrgSearch(e.target.value)}
+              className="mt-1 w-full border rounded px-3 py-2 dark:bg-gray-700 dark:text-gray-100"
+            />
+
             <select
               value={selectedOrg}
               onChange={(e) => setSelectedOrg(e.target.value)}
-              className="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:border-gray-600"
+              className="mt-2 w-full border rounded px-3 py-2 dark:bg-gray-700 dark:text-gray-100"
               required
+              size={6} // show multiple rows for easier scrolling
             >
-              <option value="">Zvoľ organizáciu...</option>
-              {orgs.map((o) => (
-                <option key={o.$id} value={o.$id}>
-                  {o.name}
-                </option>
-              ))}
+              <option value="">-- Vyber organizáciu --</option>
+              {orgs
+                .filter((o) => {
+                  const search = orgSearch.toLowerCase();
+                  return (
+                    o.name?.toLowerCase().includes(search) ||
+                    o.Mesto?.toLowerCase().includes(search) ||
+                    o.description?.toLowerCase().includes(search)
+                  );
+                })
+                .map((o) => (
+                  <option key={o.$id} value={o.$id}>
+                    {o.name} {o.Mesto ? `(${o.Mesto})` : ""}
+                  </option>
+                ))}
             </select>
           </div>
 
