@@ -10,6 +10,7 @@ const SYSTEMS_COLLECTION = "68a585d0001d9d6626d9";
 const ACCESS_COLLECTION = "68a5863e003d18d713f2";
 const ORGS_COLLECTION = "68a583a30003f51d3891";
 const RESERVATIONS_COLLECTION = "reservations"; // add your reservations collection ID
+const COMPONENTS_COLLECTION = "components"; // add this line
 
 export default function DashboardPage() {
   const [profile, setProfile] = useState<any>(null);
@@ -70,11 +71,11 @@ export default function DashboardPage() {
         );
         setAccesses(accessesRes.documents);
 
-        const systemsRes = await databases.listDocuments(
+        const componentsRes = await databases.listDocuments(
           DB_ID,
-          SYSTEMS_COLLECTION
+          COMPONENTS_COLLECTION
         );
-        setSystems(systemsRes.documents);
+        setSystems(componentsRes.documents); // reuse systems state to store components
 
         if (userProfile.role === "admin") {
           const reservationsRes = await databases.listDocuments(
@@ -106,13 +107,14 @@ export default function DashboardPage() {
   const reservationSummary: Record<string, Record<string, number>> = {};
   reservations.forEach((r) => {
     const orgId = r.organizationId;
-    const sysId = r.systemId;
+    const compId = r.componentId;
     const qty = parseInt(r.quantity, 10) || 0;
 
     if (!reservationSummary[orgId]) reservationSummary[orgId] = {};
-    if (!reservationSummary[orgId][sysId]) reservationSummary[orgId][sysId] = 0;
+    if (!reservationSummary[orgId][compId])
+      reservationSummary[orgId][compId] = 0;
 
-    reservationSummary[orgId][sysId] += qty;
+    reservationSummary[orgId][compId] += qty;
   });
 
   if (loading)
@@ -207,36 +209,29 @@ export default function DashboardPage() {
               <p>No reservations yet.</p>
             ) : (
               <ul className="space-y-4">
-                {Object.entries(reservationSummary).map(
-                  ([orgId, systemsMap]) => {
-                    const org = orgs.find((o) => o.$id === orgId);
-                    return (
-                      <li
-                        key={orgId}
-                        className="p-4 bg-gray-100 dark:bg-gray-800 rounded"
-                      >
-                        <h3 className="font-semibold mb-2">
-                          {org?.name || "Unknown Organization"}
-                        </h3>
-                        <ul className="list-disc list-inside">
-                          {Object.entries(systemsMap).map(([sysId, qty]) => {
-                            const system = systems.find((s) => s.$id === sysId);
-                            const systemName =
-                              system?.name ||
-                              reservations.find((r) => r.systemId === sysId)
-                                ?.systemName ||
-                              "Unknown System";
-                            return (
-                              <li key={sysId}>
-                                {systemName}: {qty}
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      </li>
-                    );
-                  }
-                )}
+                {Object.entries(reservationSummary).map(([orgId, compsMap]) => {
+                  const org = orgs.find((o) => o.$id === orgId);
+                  return (
+                    <li
+                      key={orgId}
+                      className="p-4 bg-gray-100 dark:bg-gray-800 rounded"
+                    >
+                      <h3 className="font-semibold mb-2">
+                        {org?.name || "Unknown Organization"}
+                      </h3>
+                      <ul className="list-disc list-inside">
+                        {Object.entries(compsMap).map(([compId, qty]) => {
+                          const comp = systems.find((c) => c.$id === compId);
+                          return (
+                            <li key={compId}>
+                              {comp?.name || "Unknown Component"}: {qty}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </section>

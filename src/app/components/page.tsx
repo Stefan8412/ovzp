@@ -258,7 +258,7 @@ export default function ComponentsPage() {
       </div>
 
       {/* Reservations summary */}
-      <div>
+      {/*  <div>
         <h2 className="text-xl font-bold mb-4">Rezervácie</h2>
         {Object.keys(summary).length === 0 ? (
           <p>Zatiaľ žiadne rezervácie.</p>
@@ -299,7 +299,7 @@ export default function ComponentsPage() {
             })}
           </ul>
         )}
-      </div>
+      </div> */}
 
       {/* Info Modal */}
       {infoComponent && (
