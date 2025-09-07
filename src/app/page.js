@@ -48,14 +48,16 @@ export default function HomePage() {
               </p>
             </div>
           </Link>
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-            <h3 className="text-xl font-semibold mb-2">
-              🔐 Pristupový managment - v príprave
-            </h3>
-            <p className="text-gray-600 dark:text-gray-300">
-              organizujte a spravujte prístupy k vašim systémom jednoducho
-            </p>
-          </div>
+          <Link href="/login">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+              <h3 className="text-xl font-semibold mb-2">
+                🔐 Pristupový managment - v príprave
+              </h3>
+              <p className="text-gray-600 dark:text-gray-300">
+                organizujte a spravujte prístupy k vašim systémom jednoducho
+              </p>
+            </div>
+          </Link>
         </section>
       </main>
 

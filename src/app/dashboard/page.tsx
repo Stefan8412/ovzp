@@ -9,8 +9,8 @@ const USERS_COLLECTION = "68a584f200096452ac1c";
 const SYSTEMS_COLLECTION = "68a585d0001d9d6626d9";
 const ACCESS_COLLECTION = "68a5863e003d18d713f2";
 const ORGS_COLLECTION = "68a583a30003f51d3891";
-const RESERVATIONS_COLLECTION = "reservations"; // add your reservations collection ID
-const COMPONENTS_COLLECTION = "components"; // add this line
+const RESERVATIONS_COLLECTION = "reservations";
+const COMPONENTS_COLLECTION = "components";
 
 export default function DashboardPage() {
   const [profile, setProfile] = useState<any>(null);
@@ -19,6 +19,7 @@ export default function DashboardPage() {
   const [accesses, setAccesses] = useState<any[]>([]);
   const [orgs, setOrgs] = useState<any[]>([]);
   const [reservations, setReservations] = useState<any[]>([]);
+  const [components, setComponents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,13 +32,14 @@ export default function DashboardPage() {
           Query.equal("authUserId", [authUser.$id]),
         ]);
 
-        if (userRes.total === 0)
+        if (userRes.total === 0) {
           throw new Error("No profile found. Contact your admin.");
+        }
 
         const userProfile = userRes.documents[0];
         setProfile(userProfile);
 
-        // Admin: all orgs, Responsible: own org
+        // Orgs
         const orgFilter =
           userProfile.role === "admin"
             ? undefined
@@ -49,6 +51,7 @@ export default function DashboardPage() {
         );
         setOrgs(orgsRes.documents);
 
+        // Members
         const membersFilter =
           userProfile.role === "admin"
             ? undefined
@@ -60,6 +63,7 @@ export default function DashboardPage() {
         );
         setMembers(membersRes.documents);
 
+        // Accesses
         const accessesFilter =
           userProfile.role === "admin"
             ? undefined
@@ -71,18 +75,26 @@ export default function DashboardPage() {
         );
         setAccesses(accessesRes.documents);
 
-        const componentsRes = await databases.listDocuments(
+        // Systems
+        const systemsRes = await databases.listDocuments(
           DB_ID,
-          COMPONENTS_COLLECTION
+          SYSTEMS_COLLECTION
         );
-        setSystems(componentsRes.documents); // reuse systems state to store components
+        setSystems(systemsRes.documents);
 
+        // Reservations & Components (admin only)
         if (userProfile.role === "admin") {
           const reservationsRes = await databases.listDocuments(
             DB_ID,
             RESERVATIONS_COLLECTION
           );
           setReservations(reservationsRes.documents);
+
+          const componentsRes = await databases.listDocuments(
+            DB_ID,
+            COMPONENTS_COLLECTION
+          );
+          setComponents(componentsRes.documents);
         }
       } catch (err: any) {
         console.error("Error loading dashboard:", err);
@@ -103,7 +115,40 @@ export default function DashboardPage() {
       console.error("Logout failed:", err);
     }
   }
-  // Build summary
+
+  // Grant access (responsible role)
+  async function grantAccess(userId: string, systemId: string) {
+    if (!profile?.organizationId) return;
+    try {
+      const doc = await databases.createDocument(
+        DB_ID,
+        ACCESS_COLLECTION,
+        ID.unique(),
+        {
+          userId,
+          systemId,
+          organizationId: profile.organizationId,
+          status: "granted",
+          createdAt: new Date().toISOString(),
+        }
+      );
+      setAccesses((prev) => [...prev, doc]);
+    } catch (err) {
+      console.error("Grant access failed:", err);
+    }
+  }
+
+  // Cancel access
+  async function cancelAccess(accessId: string) {
+    try {
+      await databases.deleteDocument(DB_ID, ACCESS_COLLECTION, accessId);
+      setAccesses((prev) => prev.filter((a) => a.$id !== accessId));
+    } catch (err) {
+      console.error("Cancel access failed:", err);
+    }
+  }
+
+  // Build reservation summary (admin only)
   const reservationSummary: Record<string, Record<string, number>> = {};
   reservations.forEach((r) => {
     const orgId = r.organizationId;
@@ -117,14 +162,16 @@ export default function DashboardPage() {
     reservationSummary[orgId][compId] += qty;
   });
 
-  if (loading)
+  if (loading) {
     return (
       <p className="p-6 text-gray-800 dark:text-gray-200">
         Loading dashboard...
       </p>
     );
-  if (error)
+  }
+  if (error) {
     return <p className="p-6 text-red-600 dark:text-red-400">{error}</p>;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
@@ -145,7 +192,7 @@ export default function DashboardPage() {
       </header>
 
       <main className="p-6 space-y-8">
-        {/* Members */}
+        {/* Members (responsible can grant access) */}
         <section>
           <h2 className="text-lg font-semibold mb-4">Members</h2>
           <ul className="space-y-2">
@@ -160,7 +207,12 @@ export default function DashboardPage() {
                 {profile.role === "responsible" && (
                   <select
                     defaultValue=""
-                    // onChange={(e) => grantAccess(m.$id, e.target.value)}
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        grantAccess(m.$id, e.target.value);
+                        e.target.value = "";
+                      }
+                    }}
                     className="border rounded px-2 py-1 dark:bg-gray-700 dark:text-gray-100"
                   >
                     <option value="">Grant access...</option>
@@ -180,24 +232,29 @@ export default function DashboardPage() {
         <section>
           <h2 className="text-lg font-semibold mb-4">Accesses</h2>
           <ul className="space-y-2">
-            {accesses.map((a) => (
-              <li
-                key={a.$id}
-                className="p-3 bg-white dark:bg-gray-800 shadow rounded flex justify-between"
-              >
-                <span>
-                  User: {a.userId} → System: {a.systemId} ({a.status})
-                </span>
-                {profile.role === "responsible" && a.status === "granted" && (
-                  <button
-                    // onClick={() => cancelAccess(a.$id)}
-                    className="bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
-                  >
-                    Cancel
-                  </button>
-                )}
-              </li>
-            ))}
+            {accesses.map((a) => {
+              const sys = systems.find((s) => s.$id === a.systemId);
+              const user = members.find((u) => u.$id === a.userId);
+              return (
+                <li
+                  key={a.$id}
+                  className="p-3 bg-white dark:bg-gray-800 shadow rounded flex justify-between"
+                >
+                  <span>
+                    User: {user?.name || a.userId} → {sys?.name || a.systemId} (
+                    {a.status})
+                  </span>
+                  {profile.role === "responsible" && a.status === "granted" && (
+                    <button
+                      onClick={() => cancelAccess(a.$id)}
+                      className="bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         </section>
 
@@ -221,7 +278,7 @@ export default function DashboardPage() {
                       </h3>
                       <ul className="list-disc list-inside">
                         {Object.entries(compsMap).map(([compId, qty]) => {
-                          const comp = systems.find((c) => c.$id === compId);
+                          const comp = components.find((c) => c.$id === compId);
                           return (
                             <li key={compId}>
                               {comp?.name || "Unknown Component"}: {qty}
