@@ -122,7 +122,7 @@ export default function ComponentsPage() {
         available: comp.available - quantity,
       });
 
-      alert("Reservation successful!");
+      alert("Rezervácia úspešná!");
       setSelectedComp("");
       setSelectedOrg("");
       setQuantity(1);
@@ -249,6 +249,7 @@ export default function ComponentsPage() {
           </div>
 
           {/* Component Select */}
+          {/* Component Select */}
           <div>
             <label className="block text-sm">Komponent</label>
             <select
@@ -258,11 +259,13 @@ export default function ComponentsPage() {
               required
             >
               <option value="">Zvoľ komponent...</option>
-              {components.map((c) => (
-                <option key={c.$id} value={c.$id}>
-                  {c.name} (dostupné: {c.available})
-                </option>
-              ))}
+              {components
+                .filter((c) => c.available > 0) // 🔹 only show available components
+                .map((c) => (
+                  <option key={c.$id} value={c.$id}>
+                    {c.name} (dostupné: {c.available})
+                  </option>
+                ))}
             </select>
           </div>
 
