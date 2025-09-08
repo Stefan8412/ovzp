@@ -159,16 +159,27 @@ export default function ComponentsPage() {
 
       {/* Components list */}
       <div className="grid grid-cols-2 gap-4">
-        {components.map((c) => (
-          <div
-            key={c.$id}
-            className="p-4 bg-white dark:bg-gray-800 rounded shadow hover:shadow-lg cursor-pointer"
-            onClick={() => setInfoComponent(c)}
-          >
-            <h2 className="text-lg font-semibold">{c.name}</h2>
-            <p>dostupné: {c.available}</p>
-          </div>
-        ))}
+        {components
+          .filter((c) => c.available > 0) // 🔹 hide items with 0 available
+          .map((c) => (
+            <div
+              key={c.$id}
+              className="p-4 bg-white dark:bg-gray-800 rounded shadow"
+            >
+              <h2 className="text-lg font-semibold">{c.name}</h2>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                dostupné: {c.available}
+              </p>
+
+              {/* 🔹 Show button */}
+              <button
+                onClick={() => setInfoComponent(c)}
+                className="mt-2 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                Zobraziť
+              </button>
+            </div>
+          ))}
       </div>
 
       {/* Reservation form */}

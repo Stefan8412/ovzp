@@ -15,7 +15,13 @@ export default function Header() {
             href="/"
             className="text-xl font-bold text-gray-800 dark:text-gray-100"
           >
-            OVZP
+            <div className="flex items-center gap-3">
+              <img
+                src="https://fra.cloud.appwrite.io/v1/storage/buckets/68b958a3001c91b06757/files/68be7b7f0021269a391a/view?project=68a568df00155ab4407d&mode=admin" // place your logo in the public/ folder
+                alt="Logo"
+                className="h-20 w-20 object-contain"
+              />
+            </div>
           </Link>
 
           {/* Desktop menu */}

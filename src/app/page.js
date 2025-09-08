@@ -1,32 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import Header from "./components/Header";
 
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 shadow p-6">
-        <div className="max-w-6xl mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold">OVZP - PSK</h1>
-          <nav className="flex gap-6">
-            <Link
-              href="/login"
-              className="hover:text-blue-600 dark:hover:text-blue-400"
-            >
-              Login
-            </Link>
-            <Link
-              href="/components"
-              className="hover:text-blue-600 dark:hover:text-blue-400"
-            >
-              PC komponenty
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <Header />
 
-      {/* Main content */}
       <main className="max-w-6xl mx-auto p-6 space-y-8">
         <section className="text-center">
           <h2 className="text-3xl font-bold mb-4">
