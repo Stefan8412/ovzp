@@ -172,6 +172,7 @@ export default function ComponentsPage() {
       </div>
 
       {/* Reservation form */}
+      {/* Reservation form */}
       <div className="bg-white dark:bg-gray-800 p-6 rounded shadow">
         <h2 className="text-xl font-semibold mb-4">Rezervuj</h2>
         <form onSubmit={handleReserve} className="space-y-4">
@@ -180,39 +181,63 @@ export default function ComponentsPage() {
             <label className="block text-sm text-gray-700 dark:text-gray-300">
               Organizácia
             </label>
-            <input
-              type="text"
-              placeholder="Hľadaj organizáciu podľa názvu, mesta alebo popisu..."
-              value={orgSearch}
-              onChange={(e) => setOrgSearch(e.target.value)}
-              className="mt-1 w-full border rounded px-3 py-2 dark:bg-gray-700 dark:text-gray-100"
-            />
 
-            <select
-              value={selectedOrg}
-              onChange={(e) => setSelectedOrg(e.target.value)}
-              className="mt-2 w-full border rounded px-3 py-2 dark:bg-gray-700 dark:text-gray-100"
-              required
-              size={6} // show multiple rows for easier scrolling
-            >
-              <option value="">-- Vyber organizáciu --</option>
-              {orgs
-                .filter((o) => {
-                  const search = orgSearch.toLowerCase();
-                  return (
-                    o.name?.toLowerCase().includes(search) ||
-                    o.Mesto?.toLowerCase().includes(search) ||
-                    o.description?.toLowerCase().includes(search)
-                  );
-                })
-                .map((o) => (
-                  <option key={o.$id} value={o.$id}>
-                    {o.name} {o.Mesto ? `(${o.Mesto})` : ""}
-                  </option>
-                ))}
-            </select>
+            {/* If no org selected → show search + list */}
+            {!selectedOrg ? (
+              <>
+                <input
+                  type="text"
+                  placeholder="Hľadaj organizáciu podľa názvu, mesta alebo popisu..."
+                  value={orgSearch}
+                  onChange={(e) => setOrgSearch(e.target.value)}
+                  className="mt-1 w-full border rounded px-3 py-2 dark:bg-gray-700 dark:text-gray-100"
+                />
+
+                <select
+                  value={selectedOrg}
+                  onChange={(e) => setSelectedOrg(e.target.value)}
+                  className="mt-2 w-full border rounded px-3 py-2 dark:bg-gray-700 dark:text-gray-100"
+                  required
+                  size={6} // show multiple rows for easier scrolling
+                >
+                  <option value="">-- Vyber organizáciu --</option>
+                  {orgs
+                    .filter((o) => {
+                      const search = orgSearch.toLowerCase();
+                      return (
+                        o.name?.toLowerCase().includes(search) ||
+                        o.Mesto?.toLowerCase().includes(search) ||
+                        o.description?.toLowerCase().includes(search)
+                      );
+                    })
+                    .map((o) => (
+                      <option key={o.$id} value={o.$id}>
+                        {o.name} {o.Mesto ? `(${o.Mesto})` : ""}
+                      </option>
+                    ))}
+                </select>
+              </>
+            ) : (
+              // 🔹 Show only the selected organization + reset button
+              <div className="flex items-center justify-between bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded">
+                <span>
+                  {orgs.find((o) => o.$id === selectedOrg)?.name}{" "}
+                  {orgs.find((o) => o.$id === selectedOrg)?.Mesto
+                    ? `(${orgs.find((o) => o.$id === selectedOrg)?.Mesto})`
+                    : ""}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedOrg("")}
+                  className="text-sm text-red-600 hover:underline"
+                >
+                  Zmeniť
+                </button>
+              </div>
+            )}
           </div>
 
+          {/* Component Select */}
           <div>
             <label className="block text-sm">Komponent</label>
             <select
@@ -230,6 +255,7 @@ export default function ComponentsPage() {
             </select>
           </div>
 
+          {/* Quantity */}
           <div>
             <label className="block text-sm">Množstvo</label>
             <input
