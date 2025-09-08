@@ -10,7 +10,6 @@ const SYSTEMS_COLLECTION = "68a585d0001d9d6626d9";
 const ACCESS_COLLECTION = "68a5863e003d18d713f2";
 const ORGS_COLLECTION = "68a583a30003f51d3891";
 const RESERVATIONS_COLLECTION = "reservations";
-const COMPONENTS_COLLECTION = "components";
 
 export default function DashboardPage() {
   const [profile, setProfile] = useState<any>(null);
@@ -19,10 +18,10 @@ export default function DashboardPage() {
   const [accesses, setAccesses] = useState<any[]>([]);
   const [orgs, setOrgs] = useState<any[]>([]);
   const [reservations, setReservations] = useState<any[]>([]);
-  const [components, setComponents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Load dashboard data
   useEffect(() => {
     async function loadDashboard() {
       try {
@@ -31,15 +30,12 @@ export default function DashboardPage() {
         const userRes = await databases.listDocuments(DB_ID, USERS_COLLECTION, [
           Query.equal("authUserId", [authUser.$id]),
         ]);
-
-        if (userRes.total === 0) {
-          throw new Error("No profile found. Contact your admin.");
-        }
+        if (userRes.total === 0) throw new Error("No profile found.");
 
         const userProfile = userRes.documents[0];
         setProfile(userProfile);
 
-        // Orgs
+        // Load organizations
         const orgFilter =
           userProfile.role === "admin"
             ? undefined
@@ -51,7 +47,7 @@ export default function DashboardPage() {
         );
         setOrgs(orgsRes.documents);
 
-        // Members
+        // Load members
         const membersFilter =
           userProfile.role === "admin"
             ? undefined
@@ -63,7 +59,7 @@ export default function DashboardPage() {
         );
         setMembers(membersRes.documents);
 
-        // Accesses
+        // Load accesses
         const accessesFilter =
           userProfile.role === "admin"
             ? undefined
@@ -75,29 +71,23 @@ export default function DashboardPage() {
         );
         setAccesses(accessesRes.documents);
 
-        // Systems
+        // Load systems
         const systemsRes = await databases.listDocuments(
           DB_ID,
           SYSTEMS_COLLECTION
         );
         setSystems(systemsRes.documents);
 
-        // Reservations & Components (admin only)
+        // Load reservations (admin only)
         if (userProfile.role === "admin") {
           const reservationsRes = await databases.listDocuments(
             DB_ID,
             RESERVATIONS_COLLECTION
           );
           setReservations(reservationsRes.documents);
-
-          const componentsRes = await databases.listDocuments(
-            DB_ID,
-            COMPONENTS_COLLECTION
-          );
-          setComponents(componentsRes.documents);
         }
       } catch (err: any) {
-        console.error("Error loading dashboard:", err);
+        console.error("Dashboard load error:", err);
         setError(err.message || "Failed to load dashboard");
       } finally {
         setLoading(false);
@@ -117,7 +107,7 @@ export default function DashboardPage() {
   }
 
   // Grant access (responsible role)
-  async function grantAccess(userId: string, systemId: string) {
+  async function grantAccess(authUserId: string, systemId: string) {
     if (!profile?.organizationId) return;
     try {
       const doc = await databases.createDocument(
@@ -125,10 +115,11 @@ export default function DashboardPage() {
         ACCESS_COLLECTION,
         ID.unique(),
         {
-          userId,
+          userId: authUserId, // Only this field is required
           systemId,
           organizationId: profile.organizationId,
           status: "granted",
+          grantedBy: profile.$id,
           createdAt: new Date().toISOString(),
         }
       );
@@ -138,17 +129,29 @@ export default function DashboardPage() {
     }
   }
 
-  // Cancel access
+  // Cancel access (update status instead of deleting)
   async function cancelAccess(accessId: string) {
     try {
-      await databases.deleteDocument(DB_ID, ACCESS_COLLECTION, accessId);
-      setAccesses((prev) => prev.filter((a) => a.$id !== accessId));
+      const updated = await databases.updateDocument(
+        DB_ID,
+        ACCESS_COLLECTION,
+        accessId,
+        {
+          status: "canceled",
+          canceledAt: new Date().toISOString(),
+          canceledBy: profile?.$id || "unknown",
+        }
+      );
+
+      setAccesses((prev) =>
+        prev.map((a) => (a.$id === accessId ? updated : a))
+      );
     } catch (err) {
       console.error("Cancel access failed:", err);
     }
   }
 
-  // Build reservation summary (admin only)
+  // Build reservation summary (admin)
   const reservationSummary: Record<string, Record<string, number>> = {};
   reservations.forEach((r) => {
     const orgId = r.organizationId;
@@ -158,20 +161,17 @@ export default function DashboardPage() {
     if (!reservationSummary[orgId]) reservationSummary[orgId] = {};
     if (!reservationSummary[orgId][compId])
       reservationSummary[orgId][compId] = 0;
-
     reservationSummary[orgId][compId] += qty;
   });
 
-  if (loading) {
+  if (loading)
     return (
       <p className="p-6 text-gray-800 dark:text-gray-200">
         Loading dashboard...
       </p>
     );
-  }
-  if (error) {
+  if (error)
     return <p className="p-6 text-red-600 dark:text-red-400">{error}</p>;
-  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
@@ -192,14 +192,14 @@ export default function DashboardPage() {
       </header>
 
       <main className="p-6 space-y-8">
-        {/* Members (responsible can grant access) */}
+        {/* Members */}
         <section>
           <h2 className="text-lg font-semibold mb-4">Members</h2>
           <ul className="space-y-2">
             {members.map((m) => (
               <li
                 key={m.$id}
-                className="p-3 bg-white dark:bg-gray-800 shadow rounded flex justify-between"
+                className="p-3 bg-white dark:bg-gray-800 shadow rounded flex justify-between items-center"
               >
                 <span>
                   {m.name} ({m.email})
@@ -207,12 +207,7 @@ export default function DashboardPage() {
                 {profile.role === "responsible" && (
                   <select
                     defaultValue=""
-                    onChange={(e) => {
-                      if (e.target.value) {
-                        grantAccess(m.$id, e.target.value);
-                        e.target.value = "";
-                      }
-                    }}
+                    onChange={(e) => grantAccess(m.$id, e.target.value)}
                     className="border rounded px-2 py-1 dark:bg-gray-700 dark:text-gray-100"
                   >
                     <option value="">Grant access...</option>
@@ -232,29 +227,24 @@ export default function DashboardPage() {
         <section>
           <h2 className="text-lg font-semibold mb-4">Accesses</h2>
           <ul className="space-y-2">
-            {accesses.map((a) => {
-              const sys = systems.find((s) => s.$id === a.systemId);
-              const user = members.find((u) => u.$id === a.userId);
-              return (
-                <li
-                  key={a.$id}
-                  className="p-3 bg-white dark:bg-gray-800 shadow rounded flex justify-between"
-                >
-                  <span>
-                    User: {user?.name || a.userId} → {sys?.name || a.systemId} (
-                    {a.status})
-                  </span>
-                  {profile.role === "responsible" && a.status === "granted" && (
-                    <button
-                      onClick={() => cancelAccess(a.$id)}
-                      className="bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
-                    >
-                      Cancel
-                    </button>
-                  )}
-                </li>
-              );
-            })}
+            {accesses.map((a) => (
+              <li
+                key={a.$id}
+                className="p-3 bg-white dark:bg-gray-800 shadow rounded flex justify-between items-center"
+              >
+                <span>
+                  User: {a.userDocId} → System: {a.systemId} ({a.status})
+                </span>
+                {profile.role === "responsible" && a.status === "granted" && (
+                  <button
+                    onClick={() => cancelAccess(a.$id)}
+                    className="bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
+                  >
+                    Cancel
+                  </button>
+                )}
+              </li>
+            ))}
           </ul>
         </section>
 
@@ -278,10 +268,10 @@ export default function DashboardPage() {
                       </h3>
                       <ul className="list-disc list-inside">
                         {Object.entries(compsMap).map(([compId, qty]) => {
-                          const comp = components.find((c) => c.$id === compId);
+                          const system = systems.find((s) => s.$id === compId);
                           return (
                             <li key={compId}>
-                              {comp?.name || "Unknown Component"}: {qty}
+                              {system?.name || "Unknown Component"}: {qty}
                             </li>
                           );
                         })}

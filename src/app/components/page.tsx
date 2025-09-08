@@ -381,7 +381,7 @@ export default function ComponentsPage() {
         </div>
       )}
       <footer className="bg-white dark:bg-gray-800 p-4 text-center mt-10 text-sm text-gray-600 dark:text-gray-400">
-        © {new Date().getFullYear()} Rezervacny system. All rights reserved.
+        © {new Date().getFullYear()} OVZP-PSK. All rights reserved.
       </footer>
     </div>
   );

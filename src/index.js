@@ -4,37 +4,43 @@ import nodemailer from "nodemailer";
 export default async ({ req, res, log }) => {
   try {
     const body = JSON.parse(req.body);
-    const document = body.payload;
+    log("📥 Incoming body:", JSON.stringify(body, null, 2));
 
-    if (document.status !== "canceled") {
+    const document = body.payload;
+    log("📄 Document payload:", JSON.stringify(document, null, 2));
+    log("🔔 Event type:", body.events);
+
+    // If status not relevant, skip
+    if (!["granted", "canceled"].includes(document.status)) {
+      log(`ℹ️ Skipping: status = ${document.status}`);
       return res.send("No action needed");
     }
 
-    // 🚀 Respond fast so Appwrite doesn't timeout
+    // Respond quickly so Appwrite doesn't timeout
     res.send("Email notification queued ✅");
 
-    // Run async in background
     (async () => {
       try {
-        // 🔑 Appwrite server client
+        // Appwrite client
         const client = new Client()
-          .setEndpoint(process.env.APPWRITE_ENDPOINT) // e.g. https://cloud.appwrite.io/v1
+          .setEndpoint(process.env.APPWRITE_ENDPOINT)
           .setProject(process.env.APPWRITE_PROJECT_ID)
-          .setKey(process.env.APPWRITE_API_KEY); // must include users.read + databases.read
+          .setKey(process.env.APPWRITE_API_KEY);
 
         const users = new Users(client);
         const databases = new Databases(client);
 
-        // Fetch user email
+        // 🔎 Try fetching user
         let userEmail = document.userId;
         try {
           const user = await users.get(document.userId);
+          log("👤 User fetched:", JSON.stringify(user, null, 2));
           userEmail = user.email;
         } catch (err) {
-          log("⚠️ Could not fetch user, falling back to ID:", err.message);
+          log("⚠️ Could not fetch user, using raw userId:", err.message);
         }
 
-        // Fetch system name (adjust DB + collection IDs to your setup)
+        // 🔎 Try fetching system
         let systemName = document.systemId;
         try {
           const system = await databases.getDocument(
@@ -42,12 +48,13 @@ export default async ({ req, res, log }) => {
             process.env.SYSTEMS_COLLECTION,
             document.systemId
           );
+          log("💻 System fetched:", JSON.stringify(system, null, 2));
           systemName = system.name;
         } catch (err) {
-          log("⚠️ Could not fetch system, falling back to ID:", err.message);
+          log("⚠️ Could not fetch system, using raw systemId:", err.message);
         }
 
-        // Configure SMTP
+        // SMTP
         const transporter = nodemailer.createTransport({
           host: process.env.SMTP_HOST,
           port: parseInt(process.env.SMTP_PORT || "587", 10),
@@ -58,17 +65,16 @@ export default async ({ req, res, log }) => {
           },
         });
 
-        // Compose message
         const message = {
           from: process.env.SMTP_USER,
           to: process.env.NOTIFY_EMAIL,
-          subject: "🔔 Access Canceled Notification",
-          text: `An access was canceled:
+          subject: `🔔 Access ${document.status} Notification`,
+          text: `An access was ${document.status}:
 
 - User: ${userEmail}
 - System: ${systemName}
 - Organization ID: ${document.organizationId}
-- Canceled by: ${document.canceledBy}
+- Action by: ${document.canceledBy || "N/A"}
 - At: ${new Date().toISOString()}`,
         };
 
