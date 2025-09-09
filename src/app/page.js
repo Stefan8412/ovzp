@@ -21,7 +21,7 @@ export default function HomePage() {
       setPassword("");
       router.push("/components");
     } else {
-      setError("❌ Incorrect password");
+      setError("❌ Nesprávne heslo, skúste to znova.");
     }
   }
 
